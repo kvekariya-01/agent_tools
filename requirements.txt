@@ -1,0 +1,8 @@
+flask
+flask-restx
+sqlalchemy
+psycopg2-binary
+python-dotenv
+uvicorn
+asgiref
+supabase
