@@ -4,33 +4,31 @@ from models.knowledge_queries import KnowledgeQuery
 
 api = Namespace("knowledge", description="Knowledge API")
 
-payload_model = api.model("KnowledgeInput", {
-    "query": fields.String(required=True)
+model = api.model("KnowledgeQuery", {
+    "agent_id": fields.String,
+    "query_text": fields.String(required=True),
+    "source": fields.String,
+    "response": fields.String,
+    "confidence_score": fields.Float
 })
 
 @api.route("/query")
-class KnowledgeAPI(Resource):
-    @api.expect(payload_model)
+class Knowledge(Resource):
+    @api.expect(model)
     def post(self):
         data = api.payload
-        query = data["query"]
-
-        # MOCK RESPONSE
-        answer = f"Mocked answer for query: {query}"
-
         db = SessionLocal()
-        try:
-            record = KnowledgeQuery(
-                query_text=query,
-                response=answer,
-                source="api"
-            )
-            db.add(record)
-            db.commit()
-        finally:
-            db.close()
 
-        return {
-            "answer": answer,
-            "status": "stored in supabase"
-        }, 200
+        q = KnowledgeQuery(
+            agent_id=data.get("agent_id"),
+            query_text=data["query_text"],
+            source=data.get("source"),
+            response=data.get("response"),
+            confidence_score=data.get("confidence_score")
+        )
+
+        db.add(q)
+        db.commit()
+        db.close()
+
+        return {"message": "Query saved"}, 201

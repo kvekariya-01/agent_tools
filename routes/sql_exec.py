@@ -4,31 +4,31 @@ from models.sql_executions import SqlExecution
 
 api = Namespace("sql_exec", description="SQL Execution API")
 
-payload_model = api.model("SqlExecInput", {
-    "query": fields.String(required=True)
+model = api.model("SqlExecution", {
+    "agent_id": fields.String,
+    "query": fields.String(required=True),
+    "execution_status": fields.String,
+    "rows_affected": fields.Integer,
+    "error_message": fields.String
 })
 
-@api.route("/test")
-class SqlExecAPI(Resource):
-    @api.expect(payload_model)
+@api.route("/run")
+class RunSQL(Resource):
+    @api.expect(model)
     def post(self):
         data = api.payload
-        query = data["query"]
-
         db = SessionLocal()
-        try:
-            record = SqlExecution(
-                query=query,
-                execution_status="success",
-                rows_affected=1,
-                error_message=None
-            )
-            db.add(record)
-            db.commit()
-        finally:
-            db.close()
 
-        return {
-            "query": query,
-            "stored": True
-        }, 200
+        execution = SqlExecution(
+            agent_id=data.get("agent_id"),
+            query=data["query"],
+            execution_status=data.get("execution_status"),
+            rows_affected=data.get("rows_affected"),
+            error_message=data.get("error_message")
+        )
+
+        db.add(execution)
+        db.commit()
+        db.close()
+
+        return {"message": "SQL execution logged"}, 201
